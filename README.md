@@ -147,9 +147,39 @@ Calculates a proactive resource allocation score (0-100) evaluating three pillar
 
 ---
 
-## 7. 💻 Developer Setup & Installation
+## 7. 🚀 Strategic Roadmap (Next 12 Months)
 
-### 7.1. Database Pre-requisites
+* **Phase 1: Ground-Truthing & Sensor Fusion (Months 1-3)**
+* Deploy 50 test IoT nodes at critical drainage junctions to validate LSTM real-time accuracy.
+* Launch crowdsourced PWA (G2C/C2G) enabling citizens to upload geo-tagged images for model retraining.
+
+
+* **Phase 2: Inter-Agency API Integration (Months 4-6)**
+* Develop endpoints for the Dept. of Health to automatically cross-reference flood risk zones with vector-borne disease data.
+* Direct integration with suburban railway command centers to trigger automated pumping protocols.
+
+
+* **Phase 3: Offline Resilience & Edge AI (Months 7-12)**
+* Implement an SMS-based SOS layer for zero-bandwidth environments.
+* Shift preliminary OpenCV waste-detection directly to edge devices (CCTV cameras) to reduce central server compute load.
+
+
+## 8. 🔮 Unimplemented Innovations (Future Scope)
+
+Due to strict hackathon time constraints, the following heavily engineered pipelines were designed but reserved for immediate post-launch integration:
+
+* **Conversational AI Voice Agents for Crisis Management:** Passive SMS alerts fail during severe crises. We mapped an architecture utilizing LLM-driven voice synthesis (e.g., Twilio API + LLM) to actively call on-ground "Monsoon Squads" and vulnerable informal settlement residents, requiring keypad confirmation to ensure evacuation protocols are acknowledged.
+* **RAG-Powered Municipal Data Retrieval:** Municipal bodies sit on decades of unstructured PDFs, BRIMSTOWAD master plans, and contractor desilting logs. We designed a **Retrieval-Augmented Generation (RAG) architecture** using vector embeddings to allow operators to query historical contexts in natural language (e.g., *"Show me the correlation between contractor X's desilting logs and Ward 4 flooding in 2023"*).
+* **Immutable Accountability Layer:** Currently, municipal bodies lose crores to false desilting reports. By tying our OpenCV waste-detection agent directly to an immutable ledger (Blockchain/Smart Contracts), the system can automatically flag or slash contractor payments if the AI detects physical silt blockages despite logged completion, entirely removing human corruption from the loop.
+* **Edge-AI CCTV Processing:** Streaming thousands of high-definition CCTV feeds to a central server for waste detection creates massive bandwidth bottlenecks. The immediate next step is containerizing the OpenCV detection models and deploying them directly to Edge-AI nodes at the camera level, transmitting only lightweight metadata alerts back to the central engine.
+
+---
+
+
+
+## 9. 💻 Developer Setup & Installation
+
+### 9.1. Database Pre-requisites
 
 Ensure Docker is installed to run a PostGIS-enabled PostgreSQL instance:
 
@@ -158,7 +188,7 @@ docker run -d --name postgis -e POSTGRES_PASSWORD=yourpassword -p 5432:5432 post
 
 ```
 
-### 7.2. Backend (FastAPI Engine)
+### 9.2. Backend (FastAPI Engine)
 
 ```bash
 cd backend
@@ -176,7 +206,7 @@ uvicorn app.main:app --reload --port 8000
 
 ```
 
-### 7.3. Frontend (Next.js Dashboard)
+### 9.3. Frontend (Next.js Dashboard)
 
 ```bash
 cd frontend
@@ -193,19 +223,3 @@ npm run dev
 *Access the dashboard at `http://localhost:3000*`
 
 ---
-
-## 8. 🚀 Strategic Roadmap (Next 12 Months)
-
-* **Phase 1: Ground-Truthing & Sensor Fusion (Months 1-3)**
-* Deploy 50 test IoT nodes at critical drainage junctions to validate LSTM real-time accuracy.
-* Launch crowdsourced PWA (G2C/C2G) enabling citizens to upload geo-tagged images for model retraining.
-
-
-* **Phase 2: Inter-Agency API Integration (Months 4-6)**
-* Develop endpoints for the Dept. of Health to automatically cross-reference flood risk zones with vector-borne disease data.
-* Direct integration with suburban railway command centers to trigger automated pumping protocols.
-
-
-* **Phase 3: Offline Resilience & Edge AI (Months 7-12)**
-* Implement an SMS-based SOS layer for zero-bandwidth environments.
-* Shift preliminary OpenCV waste-detection directly to edge devices (CCTV cameras) to reduce central server compute load.
