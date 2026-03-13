@@ -151,7 +151,6 @@ A detailed view showing *why* a specific hotspot is at risk, utilizing explainab
 
 * **Insight**: Combines computer vision (OpenCV) data with sensor feeds to provide nuanced decision-making support.
 
----
 
 ---
 
