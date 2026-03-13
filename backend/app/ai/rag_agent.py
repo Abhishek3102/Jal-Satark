@@ -176,11 +176,21 @@ def _extract_artifacts(text: str) -> tuple[str, list[Artifact]]:
 
 def _artifacts_from_events(events: list[dict]) -> list[Artifact]:
     out: list[Artifact] = []
+    seen: set[str] = set()
     for e in events:
         res = e.get("result")
         if isinstance(res, dict) and isinstance(res.get("artifact"), dict):
             a = res["artifact"]
             try:
+                key = json.dumps(
+                    {"type": a.get("type"), "renderer": a.get("renderer"), "title": a.get("title"), "spec": a.get("spec")},
+                    sort_keys=True,
+                    ensure_ascii=False,
+                    default=str,
+                )
+                if key in seen:
+                    continue
+                seen.add(key)
                 out.append(
                     Artifact(
                         type=str(a.get("type")),

@@ -43,7 +43,7 @@ class ChromaVectorStore:
         res = self.col.query(
             query_embeddings=[embedding],
             n_results=top_k,
-            include=["documents", "metadatas", "distances", "ids"],
+            include=["documents", "metadatas", "distances"],
         )
 
         out: list[RetrievedChunk] = []
