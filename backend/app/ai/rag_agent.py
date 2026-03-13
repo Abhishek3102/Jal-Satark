@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import uuid
 
@@ -8,6 +9,7 @@ from .gemini_client import GeminiClient
 from .knowledge import chunk_text, load_knowledge_docs
 from .roles import ROLE_PACK, pick_roles
 from .schemas import Artifact, Citation
+from .tools import execute_tool, tool_declarations
 from .vector_store import ChromaVectorStore
 
 
@@ -86,7 +88,8 @@ class RAGAgent:
             "Rules:\n"
             "- Use ONLY the provided context as ground truth; if not present, state assumptions clearly.\n"
             "- Be concrete and operational: who/what/when.\n"
-            "- If user asks for charts/diagrams, output a JSON artifact spec after the answer.\n"
+            "- Prefer calling tools when you need data (wards/hotspots) or when generating charts/diagrams.\n"
+            "- Do NOT hand-write chart/diagram JSON unless the tool is unavailable.\n"
             "- Keep answers structured: Situation, Assessment, Recommendations, Next steps.\n"
         )
 
@@ -96,16 +99,18 @@ class RAGAgent:
             f"User context (JSON): {context}\n\n"
             f"Retrieved knowledge:\n---\n" + "\n\n---\n".join(context_blocks) + "\n---\n\n"
             f"User question: {message}\n\n"
-            "Return:\n"
-            "1) A professional answer in markdown.\n"
-            "2) If visualization is needed, include a final section `ARTIFACTS_JSON` containing a JSON array.\n"
-            "   Each artifact must be {type, renderer, title, spec}.\n"
+            "Return a professional answer in markdown.\n"
+            "If you need visuals, CALL tools `make_chart` and/or `make_diagram`.\n"
         )
 
-        text = self.gemini.generate(prompt)
+        text, tool_events = self.gemini.generate_with_tools(
+            prompt=prompt,
+            tool_decls=tool_declarations(),
+            tool_executor=execute_tool,
+            max_steps=4,
+        )
 
-        artifacts: list[Artifact] = []
-        # MVP: do not parse artifacts automatically yet (frontend can ignore). We keep hook for later.
+        artifacts = _artifacts_from_events(tool_events)
         profile = {"roles": roles, "mode": mode}
         return text, citations, artifacts, profile
 
@@ -113,3 +118,77 @@ class RAGAgent:
 def new_session_id() -> str:
     return str(uuid.uuid4())
 
+
+def _extract_artifacts(text: str) -> tuple[str, list[Artifact]]:
+    """
+    Extract artifacts from a model response using sentinel markers:
+      ARTIFACTS_JSON
+      <json>
+      END_ARTIFACTS_JSON
+    """
+    if not text:
+        return "", []
+
+    start_marker = "ARTIFACTS_JSON"
+    end_marker = "END_ARTIFACTS_JSON"
+
+    start = text.find(start_marker)
+    if start == -1:
+        return text, []
+
+    end = text.find(end_marker, start)
+    if end == -1:
+        # If malformed, don't break answer
+        return text, []
+
+    json_block = text[start + len(start_marker) : end].strip()
+    # Remove optional code fences
+    if json_block.startswith("```"):
+        json_block = json_block.strip("`").strip()
+        # If "json" language tag exists, drop first line
+        lines = json_block.splitlines()
+        if lines and lines[0].strip().lower() in {"json", "javascript"}:
+            json_block = "\n".join(lines[1:]).strip()
+
+    artifacts: list[Artifact] = []
+    try:
+        parsed = json.loads(json_block)
+        if isinstance(parsed, list):
+            for a in parsed:
+                if not isinstance(a, dict):
+                    continue
+                if "type" not in a or "renderer" not in a or "spec" not in a:
+                    continue
+                artifacts.append(
+                    Artifact(
+                        type=str(a.get("type")),
+                        renderer=str(a.get("renderer")),
+                        title=a.get("title"),
+                        spec=a.get("spec"),
+                    )
+                )
+    except Exception:
+        artifacts = []
+
+    cleaned = (text[:start].rstrip() + "\n").strip()
+    return cleaned, artifacts
+
+
+def _artifacts_from_events(events: list[dict]) -> list[Artifact]:
+    out: list[Artifact] = []
+    for e in events:
+        res = e.get("result")
+        if isinstance(res, dict) and isinstance(res.get("artifact"), dict):
+            a = res["artifact"]
+            try:
+                out.append(
+                    Artifact(
+                        type=str(a.get("type")),
+                        renderer=str(a.get("renderer")),
+                        title=a.get("title"),
+                        spec=a.get("spec"),
+                    )
+                )
+            except Exception:
+                continue
+    return out

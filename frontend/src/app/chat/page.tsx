@@ -1,7 +1,21 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
-import { Send, Loader2, Bot, User, Link2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Send, Loader2, Bot, User, Link2, BarChart3, GitBranch } from "lucide-react";
+import mermaid from "mermaid";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  BarChart,
+  Bar,
+  AreaChart,
+  Area,
+} from "recharts";
 
 type Citation = {
   source_id: string;
@@ -30,6 +44,7 @@ type Msg = {
   role: "user" | "assistant";
   content: string;
   citations?: Citation[];
+  artifacts?: Artifact[];
 };
 
 function getApiBase(): string {
@@ -69,8 +84,19 @@ export default function ChatPage() {
   ]);
 
   const listRef = useRef<HTMLDivElement | null>(null);
+  const mermaidInitialized = useRef(false);
 
   const apiBase = useMemo(() => getApiBase(), []);
+
+  useEffect(() => {
+    if (mermaidInitialized.current) return;
+    mermaidInitialized.current = true;
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: "dark",
+      securityLevel: "strict",
+    });
+  }, []);
 
   async function send() {
     const text = input.trim();
@@ -108,6 +134,7 @@ export default function ChatPage() {
         role: "assistant",
         content: data.answer,
         citations: data.citations || [],
+        artifacts: data.artifacts || [],
       };
       setMessages((m) => [...m, assistantMsg]);
 
@@ -196,6 +223,14 @@ export default function ChatPage() {
                     ) : (
                       <div className="text-slate-100 whitespace-pre-wrap leading-relaxed">{msg.content}</div>
                     )}
+
+                    {msg.role === "assistant" && msg.artifacts && msg.artifacts.length > 0 ? (
+                      <div className="mt-4 pt-4 border-t border-white/10 space-y-3">
+                        {msg.artifacts.map((a, idx) => (
+                          <ArtifactCard key={`${msg.id}-a-${idx}`} artifact={a} />
+                        ))}
+                      </div>
+                    ) : null}
 
                     {msg.role === "assistant" && msg.citations && msg.citations.length > 0 ? (
                       <div className="mt-4 pt-4 border-t border-white/10">
@@ -322,6 +357,159 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ArtifactCard({ artifact }: { artifact: Artifact }) {
+  const title =
+    artifact.title || (artifact.type === "diagram" ? "Diagram" : artifact.type === "chart" ? "Chart" : "Artifact");
+
+  return (
+    <div className="rounded-3xl border border-white/10 bg-black/20 overflow-hidden">
+      <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+        <div className="text-sm font-semibold text-slate-200">{title}</div>
+        <div className="text-xs font-mono text-slate-500">
+          {artifact.type}/{artifact.renderer}
+        </div>
+      </div>
+      <div className="p-4">
+        {artifact.renderer === "mermaid" && typeof artifact.spec === "string" ? (
+          <MermaidBlock code={artifact.spec} />
+        ) : artifact.renderer === "recharts" && typeof artifact.spec === "object" && artifact.spec !== null ? (
+          <RechartsBlock spec={artifact.spec as RechartsSpec} />
+        ) : (
+          <pre className="text-xs text-slate-300 whitespace-pre-wrap break-words">
+            {JSON.stringify(artifact.spec, null, 2)}
+          </pre>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MermaidBlock({ code }: { code: string }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function run() {
+      setErr(null);
+      try {
+        const id = `m-${crypto.randomUUID()}`;
+        const out = await mermaid.render(id, code);
+        if (cancelled) return;
+        if (ref.current) ref.current.innerHTML = out.svg;
+      } catch (e) {
+        setErr(e instanceof Error ? e.message : "Failed to render diagram");
+      }
+    }
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [code]);
+
+  if (err) {
+    return (
+      <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-200">
+        {err}
+        <pre className="mt-2 text-xs text-red-200/80 whitespace-pre-wrap">{code}</pre>
+      </div>
+    );
+  }
+  return <div ref={ref} className="w-full overflow-x-auto" />;
+}
+
+type RechartsSpec = {
+  chartType: "line" | "bar" | "area";
+  data: Array<Record<string, unknown>>;
+  xKey: string;
+  yKey?: string;
+  series?: Array<{ key: string; name?: string; color?: string }>;
+};
+
+function RechartsBlock({ spec }: { spec: RechartsSpec }) {
+  const chartType = spec.chartType || "line";
+  const data = Array.isArray(spec.data) ? spec.data : [];
+  const xKey = spec.xKey;
+
+  const series =
+    spec.series && spec.series.length > 0
+      ? spec.series
+      : spec.yKey
+        ? [{ key: spec.yKey, name: spec.yKey, color: "#22d3ee" }]
+        : [];
+
+  if (!xKey || data.length === 0 || series.length === 0) {
+    return (
+      <div className="text-sm text-slate-300">
+        Invalid chart spec. Expecting: <span className="font-mono">chartType, data[], xKey, yKey/series</span>
+      </div>
+    );
+  }
+
+  const common = (
+    <>
+      <CartesianGrid stroke="rgba(255,255,255,0.08)" />
+      <XAxis dataKey={xKey} stroke="rgba(226,232,240,0.7)" fontSize={12} />
+      <YAxis stroke="rgba(226,232,240,0.7)" fontSize={12} />
+      <Tooltip
+        contentStyle={{
+          background: "rgba(2,6,23,0.9)",
+          border: "1px solid rgba(255,255,255,0.12)",
+          borderRadius: 12,
+          color: "rgba(226,232,240,0.9)",
+        }}
+      />
+    </>
+  );
+
+  return (
+    <div className="w-full h-[320px]">
+      <div className="flex items-center gap-2 text-xs text-slate-400 mb-3">
+        {chartType === "line" ? <GitBranch className="w-4 h-4" /> : <BarChart3 className="w-4 h-4" />}
+        Rendered chart
+      </div>
+      <ResponsiveContainer width="100%" height="100%">
+        {chartType === "bar" ? (
+          <BarChart data={data}>
+            {common}
+            {series.map((s) => (
+              <Bar key={s.key} dataKey={s.key} name={s.name || s.key} fill={s.color || "#60a5fa"} />
+            ))}
+          </BarChart>
+        ) : chartType === "area" ? (
+          <AreaChart data={data}>
+            {common}
+            {series.map((s) => (
+              <Area
+                key={s.key}
+                dataKey={s.key}
+                name={s.name || s.key}
+                stroke={s.color || "#22d3ee"}
+                fill={s.color ? `${s.color}55` : "rgba(34,211,238,0.25)"}
+              />
+            ))}
+          </AreaChart>
+        ) : (
+          <LineChart data={data}>
+            {common}
+            {series.map((s) => (
+              <Line
+                key={s.key}
+                type="monotone"
+                dataKey={s.key}
+                name={s.name || s.key}
+                stroke={s.color || "#22d3ee"}
+                strokeWidth={2}
+                dot={false}
+              />
+            ))}
+          </LineChart>
+        )}
+      </ResponsiveContainer>
     </div>
   );
 }
