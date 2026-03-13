@@ -84,6 +84,75 @@ graph TD
 
 ```
 
+### 🖥️ Visual Interface & Walkthrough (AI is used to add labels in screenshots)
+
+This section provides a visual tour of the Jal-Satark platform, showcasing the transition from raw data to actionable flood intelligence.
+
+#### 1. Landing Page (AI is used to add labels in screenshots)
+
+The entry point of the application, establishing the mission to bridge the gap between meteorological alerts and ward-level operations.
+
+<img width="1280" height="3352" alt="landing page" src="https://github.com/user-attachments/assets/aec8fd9c-a68e-4d0c-9a34-7f319a9c2c37" />
+
+
+* **Purpose**: Provides an overview of the urban hydrological crisis and the "Agentic AI" solution.
+
+---
+
+#### 2. Interactive Flood Dashboard (AI is used to add labels in screenshots)
+
+Our central command interface powered by Mapbox GL, rendering 3D topographical layers with 7-meter precision.
+
+<img width="3016" height="1408" alt="Dashboard" src="https://github.com/user-attachments/assets/cef6ee31-b597-470b-b18d-04f55844e184" />
+
+
+* **Key Features**: Visualizes street-level inundation zones and micro-hotspot coordinates for the municipal "Monsoon Squad".
+
+---
+
+#### 3. Hydrological Analytics & Engine Metrics (AI is used to add labels in screenshots)
+
+A technical deep-dive into the core hydrology logic, including runoff depth calculations using the SCS-CN method.
+
+<img width="1914" height="2240" alt="Analytics" src="https://github.com/user-attachments/assets/b5a85369-e191-48a9-918d-2356c7291169" />
+
+
+* **Key Features**: Displays real-time runoff volumes and AI predictive accuracy scores ($R^2 > 0.95$).
+
+---
+
+#### 4. Real-Time IoT Sensor Monitoring (AI is used to add labels in screenshots)
+
+The live telemetry hub tracking manhole water levels via ESP32 microcontrollers and the MQTT protocol.
+
+<img width="1792" height="2370" alt="IoT Sensors" src="https://github.com/user-attachments/assets/b60ba952-2961-4371-9689-b6ae58b4e38f" />
+
+
+* **Key Features**: Monitors 98% hardware reliability and provides a detection-to-alert interval of under 2 seconds.
+
+---
+
+#### 5. AI-Powered Decision Support (Agent Chat) (AI is used to add labels in screenshots)
+
+The conversational interface for municipal operators to query the RAG-based intelligence engine for specific ward readiness reports.
+
+<img width="1856" height="2302" alt="ai chat" src="https://github.com/user-attachments/assets/66390297-d214-425e-a205-b475e3e4e5be" />
+
+* **Interaction**: Allows users to ask natural language questions about drainage bottlenecks and desilting progress.
+
+---
+
+#### 6. Explanable Risk Analysis (Contextual Insights) (AI is used to add labels in screenshots)
+
+A detailed view showing *why* a specific hotspot is at risk, utilizing explainable AI to distinguish between terrain sinks and pipe blockages.
+
+<img width="1472" height="2876" alt="ai chat 2" src="https://github.com/user-attachments/assets/9e70c47a-f06d-4629-837a-b9617450939e" />
+
+
+* **Insight**: Combines computer vision (OpenCV) data with sensor feeds to provide nuanced decision-making support.
+
+---
+
 ---
 
 ## 4. 🧠 Core Methodology: The Agentic Engine
