@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { Droplets, Map, BarChart3, Activity } from "lucide-react";
+import { Droplets, Map, BarChart3, Activity, MessagesSquare } from "lucide-react";
 
 export function Navigation() {
   const pathname = usePathname();
@@ -13,6 +13,7 @@ export function Navigation() {
     { href: "/dashboard", label: "Dashboard", icon: Map },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/iot", label: "IoT Sensors", icon: Activity },
+    { href: "/chat", label: "AI Chat", icon: MessagesSquare },
   ];
 
   return (
